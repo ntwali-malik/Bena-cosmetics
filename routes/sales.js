@@ -5,8 +5,10 @@ const {
 	getSaleById,
 	updateSale,
 	deleteSale,
+	peekNextInvoiceNumber,
 } = require('../controllers/salesController');
 
+router.get('/next-invoice', peekNextInvoiceNumber);
 router.post('/', createSale);
 router.get('/', getSales);
 router.get('/:id', getSaleById);

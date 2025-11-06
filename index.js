@@ -8,7 +8,13 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors());
+const corsOptions = {
+	origin: process.env.FRONTEND_ORIGIN || 'http://localhost:3000',
+	credentials: true,
+	methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+	allowedHeaders: ['Content-Type', 'Authorization'],
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Health check
@@ -23,6 +29,8 @@ app.use('/api/categories', require('./routes/categories'));
 app.use('/api/raw-materials', require('./routes/rawMaterials'));
 app.use('/api/purchases', require('./routes/purchases'));
 app.use('/api/sales', require('./routes/sales'));
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/production', require('./routes/production'));
 
 const PORT = process.env.PORT || 5000;
 
