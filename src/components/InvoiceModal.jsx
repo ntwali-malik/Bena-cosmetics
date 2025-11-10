@@ -26,8 +26,8 @@ function InvoiceModal({ sale, onClose }) {
             <img src="/logo.png" alt="Bena Cosmetics" className="brand-logo" />
             <div className="brand-col">
               <h3 className="brand-name">Bena Cosmetics Ltd</h3>
-              <div className="brand-tag muted">Natural and Organic Products</div>
-              <div className="brand-contact muted">Remera, Kisimenti • 0788776218 • info@benacosmetics.rw</div>
+              <div className="brand-tag muted">Glow Naturally Thrive Beautifully</div>
+              <div className="brand-contact muted">Remera, Kisimenti • 0788776218 • benacosmeticsrw@gmail.com</div>
             </div>
           </div>
           <div className="invoice-meta-right">
@@ -90,16 +90,12 @@ function InvoiceModal({ sale, onClose }) {
           <div className="grand">{fmt(grand)}</div>
         </div>
 
-        <div className="invoice-footer">
-          <div className="foot-left">
-            <div className="muted">Thank you for your business!</div>
-            <div className="muted">Payments are non-refundable after 7 days. Keep this invoice for your records.</div>
-          </div>
-          <div className="foot-right">
-            <div className="muted">Bena Cosmetics Ltd</div>
-            <div className="muted">Remera, Kisimenti • 0788776218</div>
-          </div>
+        {/* Footer banner (print-only) for better visual identity */}
+        <div className="invoice-banner print-only">
+          <img src="/BENA-Signature.jpg" alt="Bena Cosmetics Banner" />
         </div>
+
+        {/* Footer info removed: details are now on the banner */}
 
         <div className="modal-actions no-print">
           <button className="admin-ghost" onClick={onClose}>Close</button>

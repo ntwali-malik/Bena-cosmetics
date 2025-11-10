@@ -211,30 +211,44 @@ function Reports() {
     const pageHeight = doc.internal.pageSize.getHeight();
     let yPos = 20;
 
-    // Header
-    doc.setFillColor(26, 77, 46);
-    doc.rect(0, 0, pageWidth, 50, 'F');
+    // Header (match invoice style, compact height)
+    // Background bar (subtle, reduced height)
+    doc.setFillColor(248, 250, 248); // light
+    doc.rect(0, 0, pageWidth, 36, 'F');
+
+    const brandLeft = 14;
+    let brandTop = 8;
 
     if (logoData) {
-      const logoSize = 28;
-      doc.addImage(logoData, 'PNG', 18, 12, logoSize, logoSize);
+      const logoW = 24;
+      const logoH = 24;
+      doc.addImage(logoData, 'PNG', brandLeft, brandTop, logoW, logoH);
     }
 
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(24);
+    // Brand text
+    const textLeft = brandLeft + 24 + 8;
+    doc.setTextColor(26, 77, 46);
     doc.setFont('helvetica', 'bold');
-    doc.text('BENA COSMETICS LTD', pageWidth / 2, 20, { align: 'center' });
+    doc.setFontSize(13);
+    doc.text('Bena Cosmetics Ltd', textLeft, 14);
 
-    doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
-    doc.text('Natural and Organic Products', pageWidth / 2, 28, { align: 'center' });
-    doc.text('Remera, Kisimenti • 0788776218', pageWidth / 2, 35, { align: 'center' });
+    doc.setFontSize(9);
+    doc.setTextColor(90, 123, 142);
+    doc.text('Glow Naturally Thrive Beautifully', textLeft, 20);
+    doc.text('Remera, Kisimenti • 0788776218 • benacosmeticsrw@gmail.com', textLeft, 26);
 
-    doc.setFontSize(16);
+    // Report title on the right
     doc.setFont('helvetica', 'bold');
-    doc.text(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report`, pageWidth / 2, 45, { align: 'center' });
+    doc.setFontSize(12);
+    doc.setTextColor(26, 77, 46);
+    doc.text(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report`, pageWidth - 14, 14, { align: 'right' });
 
-    yPos = 62;
+    // Divider line
+    doc.setDrawColor(237, 243, 250);
+    doc.line(14, 36, pageWidth - 14, 36);
+
+    yPos = 44;
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');

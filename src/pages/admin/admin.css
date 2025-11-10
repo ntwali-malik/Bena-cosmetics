@@ -153,6 +153,17 @@
   .invoice-footer { flex-direction: column; }
 }
 
+/* Invoice banner (placed above footer) */
+.invoice-banner { margin: 14px 0 10px; }
+.invoice-banner img { width: 100%; height: auto; border-radius: 8px; border: 1px solid #edf3fa; display: block; }
+/* hidden by default unless printing */
+.print-only { display: none; }
+@media print {
+  .invoice-banner { margin: 12px 0 8px; }
+  .invoice-banner img { border: none; border-radius: 0; }
+  .print-only { display: block; }
+}
+
 /* Coach-like dashboard */
 .coach-dashboard { display: flex; flex-direction: column; height: 100%; }
 .coach-top { display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 2; padding: 12px 16px; background: linear-gradient(180deg, rgba(255,255,255,0.75), rgba(255,255,255,0.55)); backdrop-filter: blur(8px); border-bottom: 1px solid #d4e8d4; }
