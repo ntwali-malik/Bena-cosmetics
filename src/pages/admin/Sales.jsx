@@ -89,32 +89,37 @@ function Sales() {
   }
 
   function renderEditor({ column, value, draft, onChange, setDraft }) {
+    const fullRow = originalRows.find((r) => (r._id || r.id) === draft.id) || {};
     if (column.key === 'items') {
-      let editorVal = Array.isArray(value) ? value : (Array.isArray(draft.items) ? draft.items : [{ product: '', quantity: 1, unitPrice: '', lineTotal: 0 }]);
-      if (!Array.isArray(draft.items)) {
-        // initialize items once on first open
+      let editorVal = Array.isArray(draft.items) ? draft.items : undefined;
+      if (!editorVal && Array.isArray(fullRow.items)) {
+        editorVal = fullRow.items;
+        setDraft((d) => ({ ...d, items: editorVal }));
+      }
+      if (!editorVal) {
+        editorVal = Array.isArray(value) ? value : [{ product: '', quantity: 1, unitPrice: '', lineTotal: 0 }];
         setDraft((d) => ({ ...d, items: editorVal }));
       }
       return <SaleItemsEditor products={products} value={editorVal} onChange={(val) => onChange(val)} />;
     }
     if (column.key === 'saleDate') {
       const today = new Date().toISOString().slice(0,10);
-      const val = value || today;
+      const val = value || draft.saleDate || fullRow.saleDate || today;
       return <input type="date" value={val} onChange={(e) => onChange(e.target.value)} />;
     }
     if (column.key === 'totalAmount') {
-      const items = Array.isArray(draft.items) ? draft.items : [];
+      const items = Array.isArray(draft.items) ? draft.items : (Array.isArray(fullRow.items) ? fullRow.items : []);
       const sum = items.reduce((s, it) => s + (Number(it.lineTotal || 0) || (Number(it.quantity || 0) * Number(it.unitPrice || 0))), 0);
       return <input readOnly value={sum || ''} />;
     }
     if (column.key === 'customerName') {
       const stored = localStorage.getItem('sales.defaultCustomer') || 'Walk-in';
-      const val = value ?? (draft.customerName ?? stored);
+      const val = value ?? draft.customerName ?? fullRow.customerName ?? stored;
       return <input placeholder="Walk-in" value={val} onChange={(e) => onChange(e.target.value)} />;
     }
     if (column.key === 'paymentMethod') {
       const stored = localStorage.getItem('sales.defaultPayment') || 'cash';
-      const val = value ?? (draft.paymentMethod ?? stored);
+      const val = value ?? draft.paymentMethod ?? fullRow.paymentMethod ?? stored;
       return (
         <select value={val} onChange={(e) => onChange(e.target.value)}>
           <option value="cash">Cash</option>

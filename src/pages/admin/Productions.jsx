@@ -118,7 +118,13 @@ function Productions() {
           initialRows={displayRows}
           renderEditor={({ column, value, draft, onChange }) => {
             if (column.key === 'product') {
-              const prodId = typeof value === 'object' ? (value?._id || value?.id) : value;
+              let prodId = typeof value === 'object' ? (value?._id || value?.id) : value;
+              const ids = new Set(products.map((p) => (p._id || p.id)));
+              if (!ids.has(prodId)) {
+                const raw = originalRows.find((r) => (r._id || r.id) === draft.id);
+                const id = raw ? (typeof raw.product === 'object' ? (raw.product._id || raw.product.id) : raw.product) : '';
+                if (id) prodId = id;
+              }
               return (
                 <select value={prodId || ''} onChange={(e) => onChange(e.target.value)}>
                   <option value="">Select product</option>

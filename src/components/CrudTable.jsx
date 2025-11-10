@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
-function CrudTable({ title, columns, initialRows = [], onCreate, onUpdate, onDelete, renderEditor, renderRowActions }) {
+function CrudTable({ title, columns, initialRows = [], onCreate, onUpdate, onDelete, renderEditor, renderRowActions, canCreate = true, canDelete = true }) {
   const [rows, setRows] = useState(initialRows);
   useEffect(() => {
     setRows(initialRows || []);
@@ -81,7 +81,9 @@ function CrudTable({ title, columns, initialRows = [], onCreate, onUpdate, onDel
         <h3>{title}</h3>
         <div className="admin-actions">
           <input className="admin-search" placeholder="Search…" value={query} onChange={(e) => setQuery(e.target.value)} />
-          <button className="admin-primary" onClick={startCreate}>Add</button>
+          {canCreate && onCreate && (
+            <button className="admin-primary" onClick={startCreate}>Add</button>
+          )}
         </div>
       </div>
 
@@ -130,11 +132,13 @@ function CrudTable({ title, columns, initialRows = [], onCreate, onUpdate, onDel
                 {columns.map((c) => (<td key={c.key}>{r[c.key]}</td>))}
                 <td className="admin-row-actions">
                   {renderRowActions ? (
-                    renderRowActions({ row: r, idx, startEdit: () => startEdit(idx), remove: () => remove(idx) })
+                    renderRowActions({ row: r, idx, startEdit: () => startEdit(idx), remove: canDelete && onDelete ? () => remove(idx) : undefined })
                   ) : (
                     <>
                       <button className="admin-link" onClick={() => startEdit(idx)}>Edit</button>
-                      <button className="admin-link danger" onClick={() => remove(idx)}>Delete</button>
+                      {canDelete && onDelete && (
+                        <button className="admin-link danger" onClick={() => remove(idx)}>Delete</button>
+                      )}
                     </>
                   )}
                 </td>

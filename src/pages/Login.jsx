@@ -36,21 +36,21 @@ function Login() {
       <div className="auth-card">
         <div className="auth-left">
           <div className="brand">
-            <div className="brand-logo">●</div>
-            <div className="brand-name">YOUR LOGO</div>
+            <img src="/logo.png" alt="Bena Cosmetics" className="brand-img" />
+            <div className="brand-name">Bena Cosmetics Ltd</div>
           </div>
           <div className="welcome">
-            <h1>Hello, welcome!</h1>
-            <p>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus
-              nisi risus.
-            </p>
+            <h1>Welcome back</h1>
+            <p>Sign in to manage products, inventory and sales with ease.</p>
           </div>
-          <button type="button" className="ghost-btn">View more</button>
         </div>
 
         <div className="auth-right">
           <form className="form" onSubmit={handleSubmit}>
+            <div className="mobile-brand">
+              <img src="/logo.png" alt="Bena Cosmetics" />
+              <h3>Bena Cosmetics Ltd</h3>
+            </div>
             {error && <div className="error-banner">{error}</div>}
             <div className="field">
               <label htmlFor="email">Email address</label>
@@ -92,10 +92,6 @@ function Login() {
               {submitting ? 'Logging in...' : 'Login'}
             </button>
 
-            <div className="signup">
-              <span>Not a member yet?</span>
-              <Link className="secondary-btn" to="/login">Sign up</Link>
-            </div>
           </form>
         </div>
       </div>

@@ -7,9 +7,11 @@ import { listProductions } from '../../services/productionService';
 import { listRawMaterials } from '../../services/rawMaterialService';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { isAdmin } from '../../components/RequireRole';
 import './admin.css';
 
 function Reports() {
+  const admin = isAdmin();
   const [reportType, setReportType] = useState('daily'); // daily, weekly, monthly
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [sales, setSales] = useState([]);
@@ -18,6 +20,7 @@ function Reports() {
   const [productions, setProductions] = useState([]);
   const [rawMaterials, setRawMaterials] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [logoData, setLogoData] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -37,6 +40,35 @@ function Reports() {
       setLoading(false);
     }
     load();
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadLogo() {
+      try {
+        const response = await fetch('/logo.png');
+        if (!response.ok) return;
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (active) {
+            setLogoData(reader.result);
+          }
+        };
+        reader.readAsDataURL(blob);
+      } catch (err) {
+        if (active) {
+          setLogoData(null);
+        }
+      }
+    }
+
+    loadLogo();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const reportData = useMemo(() => {
@@ -182,22 +214,27 @@ function Reports() {
     // Header
     doc.setFillColor(26, 77, 46);
     doc.rect(0, 0, pageWidth, 50, 'F');
-    
+
+    if (logoData) {
+      const logoSize = 28;
+      doc.addImage(logoData, 'PNG', 18, 12, logoSize, logoSize);
+    }
+
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(24);
     doc.setFont('helvetica', 'bold');
     doc.text('BENA COSMETICS LTD', pageWidth / 2, 20, { align: 'center' });
-    
+
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
     doc.text('Natural and Organic Products', pageWidth / 2, 28, { align: 'center' });
     doc.text('Remera, Kisimenti • 0788776218', pageWidth / 2, 35, { align: 'center' });
-    
+
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
     doc.text(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report`, pageWidth / 2, 45, { align: 'center' });
 
-    yPos = 60;
+    yPos = 62;
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
@@ -218,11 +255,13 @@ function Reports() {
       ['Total Sales Revenue', formatRWF(reportData.totalSalesRevenue)],
       ['Total Sales Count', reportData.totalSalesCount.toString()],
       ['Total Items Sold', reportData.totalItemsSold.toString()],
-      ['Total Purchase Cost', formatRWF(reportData.totalPurchaseCost)],
-      ['Total Purchases', reportData.totalPurchaseCount.toString()],
-      ['Total Productions', reportData.totalProductionCount.toString()],
-      ['Products Produced', reportData.totalProductsProduced.toString()],
-      ['Net Profit', formatRWF(reportData.totalSalesRevenue - reportData.totalPurchaseCost)],
+      ...(admin ? [
+        ['Total Purchase Cost', formatRWF(reportData.totalPurchaseCost)],
+        ['Total Purchases', reportData.totalPurchaseCount.toString()],
+        ['Total Productions', reportData.totalProductionCount.toString()],
+        ['Products Produced', reportData.totalProductsProduced.toString()],
+        ['Net Profit', formatRWF(reportData.totalSalesRevenue - reportData.totalPurchaseCost)],
+      ] : []),
     ];
 
     autoTable(doc, {
@@ -340,8 +379,14 @@ function Reports() {
 
   return (
     <div className="admin-page">
-      <div className="page-top">
-        <h2>Reports</h2>
+      <div className="page-top report-top">
+        <div className="report-title">
+          <img src="/logo.png" alt="Bena Cosmetics" className="report-logo" />
+          <div className="report-title-text">
+            <h2>Reports</h2>
+            <p className="report-subtitle">Daily, weekly & monthly insights</p>
+          </div>
+        </div>
         <div className="page-actions">
           <button className="admin-primary" onClick={exportToPDF} disabled={loading}>
             <FiDownload style={{ marginRight: '6px' }} />
@@ -404,15 +449,17 @@ function Reports() {
                 <div className="summary-value">{reportData.totalItemsSold}</div>
               </div>
             </div>
-            <div className="report-summary-card">
-              <div className="summary-icon profit">
-                <FiTrendingUp />
+            {admin && (
+              <div className="report-summary-card">
+                <div className="summary-icon profit">
+                  <FiTrendingUp />
+                </div>
+                <div className="summary-content">
+                  <div className="summary-label">Net Profit</div>
+                  <div className="summary-value">{formatRWF(reportData.totalSalesRevenue - reportData.totalPurchaseCost)}</div>
+                </div>
               </div>
-              <div className="summary-content">
-                <div className="summary-label">Net Profit</div>
-                <div className="summary-value">{formatRWF(reportData.totalSalesRevenue - reportData.totalPurchaseCost)}</div>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Report Details */}
@@ -441,33 +488,37 @@ function Reports() {
               </div>
             </div>
 
-            <div className="report-section">
-              <h3>Purchases Overview</h3>
-              <div className="report-stats">
-                <div className="stat-item">
-                  <span className="stat-label">Total Purchase Cost:</span>
-                  <span className="stat-value">{formatRWF(reportData.totalPurchaseCost)}</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">Number of Purchases:</span>
-                  <span className="stat-value">{reportData.totalPurchaseCount}</span>
+            {admin && (
+              <div className="report-section">
+                <h3>Purchases Overview</h3>
+                <div className="report-stats">
+                  <div className="stat-item">
+                    <span className="stat-label">Total Purchase Cost:</span>
+                    <span className="stat-value">{formatRWF(reportData.totalPurchaseCost)}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">Number of Purchases:</span>
+                    <span className="stat-value">{reportData.totalPurchaseCount}</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            <div className="report-section">
-              <h3>Production Overview</h3>
-              <div className="report-stats">
-                <div className="stat-item">
-                  <span className="stat-label">Total Productions:</span>
-                  <span className="stat-value">{reportData.totalProductionCount}</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">Products Produced:</span>
-                  <span className="stat-value">{reportData.totalProductsProduced}</span>
+            {admin && (
+              <div className="report-section">
+                <h3>Production Overview</h3>
+                <div className="report-stats">
+                  <div className="stat-item">
+                    <span className="stat-label">Total Productions:</span>
+                    <span className="stat-value">{reportData.totalProductionCount}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">Products Produced:</span>
+                    <span className="stat-value">{reportData.totalProductsProduced}</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {reportData.topProducts.length > 0 && (
               <div className="report-section">

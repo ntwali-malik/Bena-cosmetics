@@ -7,8 +7,10 @@ import { getCurrentUser } from './services/authService';
 
 function RoleRedirect() {
   const user = getCurrentUser();
-  if (user?.role === 'admin') return <Navigate to="/admin-dashboard" replace />;
-  if (user?.role === 'staff') return <Navigate to="/staff-dashboard" replace />;
+  // Normalize role to lowercase for comparison (roles are stored as 'admin' or 'staff')
+  const role = (user?.role || '').toLowerCase();
+  if (role === 'admin') return <Navigate to="/admin-dashboard" replace />;
+  if (role === 'staff') return <Navigate to="/staff-dashboard" replace />;
   return <Navigate to="/login" replace />;
 }
 
@@ -24,7 +26,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
       <Route path="/admin-dashboard/*" element={<RequireAuth><AdminDashboard /></RequireAuth>} />
-      <Route path="/staff-dashboard" element={<RequireAuth><StaffDashboard /></RequireAuth>} />
+      <Route path="/staff-dashboard/*" element={<RequireAuth><StaffDashboard /></RequireAuth>} />
       <Route path="/" element={<RoleRedirect />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

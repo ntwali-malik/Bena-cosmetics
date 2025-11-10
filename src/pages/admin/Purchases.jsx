@@ -36,6 +36,20 @@ function Purchases() {
     }));
   }, [rows, materials]);
 
+  function normalizeForDisplay(row) {
+    const idToName = new Map(materials.map((m) => [m._id || m.id, m.name]));
+    const fmtDate = (d) => { try { return d ? new Date(d).toISOString().slice(0, 10) : ''; } catch { return ''; } };
+    return {
+      id: row._id || row.id,
+      material: (row.material && (row.material.name || idToName.get(row.material) || row.material)) || '',
+      quantity: row.quantity,
+      unitPrice: row.unitPrice,
+      totalCost: row.totalCost ?? (row.quantity && row.unitPrice ? row.quantity * row.unitPrice : ''),
+      purchaseDate: fmtDate(row.purchaseDate),
+      supplier: row.supplier || '',
+    };
+  }
+
   function normalizePayload(draft) {
     const matId = typeof draft.material === 'object' ? (draft.material._id || draft.material.id) : draft.material;
     const qty = draft.quantity === '' || draft.quantity === undefined ? 0 : Number(draft.quantity);
@@ -64,8 +78,15 @@ function Purchases() {
           initialRows={displayRows}
           renderEditor={({ column, value, draft, onChange }) => {
             if (column.key === 'material') {
+              let selected = (value && (typeof value === 'object' ? (value._id || value.id) : value)) || value || '';
+              const ids = new Set(materials.map((m) => (m._id || m.id)));
+              if (!ids.has(selected)) {
+                const raw = rows.find((r) => (r._id || r.id) === draft.id);
+                const id = raw ? (typeof raw.material === 'object' ? (raw.material._id || raw.material.id) : raw.material) : '';
+                if (id) selected = id;
+              }
               return (
-                <select value={value || ''} onChange={(e) => onChange(e.target.value)}>
+                <select value={selected} onChange={(e) => onChange(e.target.value)}>
                   <option value="">Select material</option>
                   {materials.map((m) => (
                     <option key={m._id || m.id} value={m._id || m.id}>{m.name}</option>
@@ -105,10 +126,24 @@ function Purchases() {
             } catch (e) {
               // ignore stock update errors in UI for now
             }
-            return created;
+            // Refresh purchases list and return normalized display object
+            const fresh = await listPurchases().catch(() => []);
+            setRows(fresh);
+            return normalizeForDisplay(created);
           }}
-          onUpdate={async (id, draft) => updatePurchase(id, normalizePayload(draft))}
-          onDelete={async (id) => deletePurchase(id)}
+          onUpdate={async (id, draft) => {
+            const updated = await updatePurchase(id, normalizePayload(draft));
+            // Refresh purchases list and return normalized display object
+            const fresh = await listPurchases().catch(() => []);
+            setRows(fresh);
+            return normalizeForDisplay(updated);
+          }}
+          onDelete={async (id) => {
+            await deletePurchase(id);
+            // Refresh purchases list after deletion
+            const fresh = await listPurchases().catch(() => []);
+            setRows(fresh);
+          }}
         />
       </div>
     </div>
