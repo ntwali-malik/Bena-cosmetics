@@ -11,18 +11,26 @@ import { getCurrentUser } from '../services/authService';
 function RequireRole({ children, allowedRoles = ['admin'], fallback = '/admin-dashboard/dashboard' }) {
   const user = getCurrentUser();
   
+  // Debug logging
+  console.log('RequireRole - User:', user, 'Allowed roles:', allowedRoles, 'User role:', user?.role);
+  
   if (!user) {
+    console.log('RequireRole - No user, redirecting to login');
     return <Navigate to="/login" replace />;
   }
   
   // Normalize role to lowercase for comparison
-  const userRole = (user.role || '').toLowerCase();
-  const normalizedAllowedRoles = allowedRoles.map(r => r.toLowerCase());
+  const userRole = (user.role || '').toLowerCase().trim();
+  const normalizedAllowedRoles = allowedRoles.map(r => r.toLowerCase().trim());
+  
+  console.log('RequireRole - Normalized user role:', userRole, 'Normalized allowed:', normalizedAllowedRoles, 'Match:', normalizedAllowedRoles.includes(userRole));
   
   if (!normalizedAllowedRoles.includes(userRole)) {
+    console.log('RequireRole - Role not allowed, redirecting to:', fallback);
     return <Navigate to={fallback} replace />;
   }
   
+  console.log('RequireRole - Access granted');
   return children;
 }
 

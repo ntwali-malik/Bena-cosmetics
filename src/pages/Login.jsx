@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { login as loginRequest } from '../@authService';
+import { getCurrentUser } from '../services/authService';
 import './Login.css';
 
 function Login() {
@@ -17,12 +18,60 @@ function Login() {
     setError('');
     setSubmitting(true);
     loginRequest({ email, password })
-      .then((data) => {
-        const role = data?.user?.role || data?.role || 'staff';
-        if (role === 'admin') {
-          navigate('/admin-dashboard');
+      .then(async (data) => {
+        // Ensure user data is properly normalized and saved
+        let user = data?.user || {};
+        
+        // Normalize role immediately
+        if (user.role) {
+          user.role = (user.role + '').toLowerCase().trim();
+        } else if (data?.role) {
+          user.role = (data.role + '').toLowerCase().trim();
         } else {
-          navigate('/staff-dashboard');
+          user.role = 'staff'; // default
+        }
+        
+        // Save the normalized user to localStorage
+        try {
+          localStorage.setItem('auth.user', JSON.stringify(user));
+        } catch (e) {
+          console.error('Failed to save user to localStorage:', e);
+        }
+        
+        // Wait a moment to ensure localStorage is written
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Verify the save worked
+        const savedUser = getCurrentUser();
+        console.log('Login - User saved:', user);
+        console.log('Login - User retrieved:', savedUser);
+        console.log('Login - Role:', user.role);
+        
+        // Get the final role (from saved user or fallback)
+        const role = (savedUser?.role || user.role || 'staff').toLowerCase().trim();
+        console.log('Login - Final role for navigation:', role);
+        console.log('Login - Is admin?', role === 'admin');
+        
+        // Validate role one more time before navigation
+        const finalRole = getCurrentUser()?.role?.toLowerCase().trim() || role;
+        console.log('Login - Final validation - Role:', finalRole);
+        
+        if (!finalRole || finalRole !== 'admin' && finalRole !== 'staff') {
+          console.error('Login - Invalid role detected:', finalRole);
+          setError('Invalid user role. Please contact administrator.');
+          return;
+        }
+        
+        // Navigate based on normalized role - use full path to dashboard
+        if (finalRole === 'admin') {
+          console.log('✅ ADMIN USER - Navigating to /admin-dashboard/dashboard');
+          navigate('/admin-dashboard/dashboard', { replace: true });
+        } else if (finalRole === 'staff') {
+          console.log('✅ STAFF USER - Navigating to /staff-dashboard/dashboard');
+          navigate('/staff-dashboard/dashboard', { replace: true });
+        } else {
+          console.error('Login - Unexpected role:', finalRole);
+          setError('Unable to determine user role. Please contact administrator.');
         }
       })
       .catch((err) => {

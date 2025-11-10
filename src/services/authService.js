@@ -32,7 +32,16 @@ async function request(path, { method = 'GET', body, headers } = {}) {
 export async function login({ email, password }) {
   const data = await request('/auth/login', { method: 'POST', body: { email, password } });
   if (data?.user) {
-    try { localStorage.setItem(USER_KEY, JSON.stringify(data.user)); } catch (e) {}
+    try {
+      // Normalize role to lowercase before storing
+      const user = { ...data.user };
+      if (user.role) {
+        user.role = (user.role + '').toLowerCase().trim();
+      }
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+    } catch (e) {
+      console.error('Failed to save user to localStorage:', e);
+    }
   }
   return data;
 }
@@ -44,13 +53,23 @@ export async function register(payload) {
 }
 
 // Get current user
-export async function getCurrentUser() {
+export function getCurrentUser() {
   try {
     const raw = localStorage.getItem(USER_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (e) {}
+    if (raw) {
+      const user = JSON.parse(raw);
+      // Debug: Log what we're reading
+      console.log('getCurrentUser - Raw localStorage:', raw);
+      console.log('getCurrentUser - Parsed user:', user);
+      console.log('getCurrentUser - User role:', user?.role);
+      return user;
+    }
+  } catch (e) {
+    console.error('getCurrentUser - Error parsing user:', e);
+  }
   // Optional: hit backend if session-based endpoint exists
   // return request('/auth/me');
+  console.log('getCurrentUser - No user found in localStorage');
   return null;
 }
 
