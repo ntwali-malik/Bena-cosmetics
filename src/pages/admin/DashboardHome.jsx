@@ -8,6 +8,7 @@ import { listRawMaterials } from '../../services/rawMaterialService';
 import { listSales } from '../../services/salesService';
 import { listUsers } from '../../services/userService';
 import { listProductions } from '../../services/productionService';
+import { getCurrentUser } from '../../services/authService';
 
 function DashboardHome() {
   const navigate = useNavigate();
@@ -20,6 +21,31 @@ function DashboardHome() {
   const [productions, setProductions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
+
+  // Determine display name for welcome message and initials for avatar
+  const currentUser = getCurrentUser();
+  const displayName = useMemo(() => {
+    if (!currentUser) return 'there';
+    const name =
+      currentUser.name ||
+      currentUser.fullName ||
+      currentUser.username ||
+      currentUser.email ||
+      '';
+    return name || 'there';
+  }, [currentUser]);
+  const initials = useMemo(() => {
+    const source =
+      (currentUser?.name || currentUser?.fullName || currentUser?.username || currentUser?.email || '')
+        .trim();
+    if (!source) return 'BC';
+    const parts = source.split(/\s+/);
+    if (parts.length === 1) {
+      const p = parts[0];
+      return (p[0] || 'B').toUpperCase() + (p[1] || 'C').toUpperCase();
+    }
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }, [currentUser]);
 
   useEffect(() => {
     async function load() {
@@ -444,12 +470,12 @@ function DashboardHome() {
     <div className="coach-dashboard">
       <header className="coach-top">
         <div>
-          <div className="coach-subtitle">Welcome back, Admin</div>
+          <div className="coach-subtitle">Welcome back, {displayName}</div>
           <h2 className="coach-title">Bena Cosmetics Dashboard</h2>
         </div>
         <div className="coach-top-actions">
           <input className="coach-search" placeholder="Search" />
-          <div className="coach-avatar">AD</div>
+          <div className="coach-avatar">{initials}</div>
         </div>
       </header>
 
@@ -694,6 +720,14 @@ function DashboardHome() {
                   const expiry = new Date(p.expiryDate);
                   const now = new Date();
                   const daysLeft = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
+                  const daysLabel =
+                    daysLeft > 1
+                      ? `${daysLeft} days left`
+                      : daysLeft === 1
+                        ? '1 day left'
+                        : daysLeft === 0
+                          ? 'Expires today'
+                          : `Expired ${Math.abs(daysLeft)} day${Math.abs(daysLeft) === 1 ? '' : 's'} ago`;
                   return (
                     <div key={idx} className="expiring-item">
                       <div className="expiring-icon">
@@ -702,7 +736,7 @@ function DashboardHome() {
                       <div className="expiring-info">
                         <div className="expiring-name">{p.name}</div>
                         <div className="expiring-date">
-                          Expires: {expiry.toLocaleDateString()} ({daysLeft} days)
+                          Expires: {expiry.toLocaleDateString()} • {daysLabel}
                         </div>
                       </div>
                     </div>
