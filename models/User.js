@@ -6,6 +6,8 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true }, // store hashed passwords only
   role: { type: String, enum: ['admin', 'staff'], default: 'staff' },
+  resetPasswordTokenHash: { type: String, default: null, index: true },
+  resetPasswordExpires: { type: Date, default: null },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
